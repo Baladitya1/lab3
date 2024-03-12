@@ -1,56 +1,50 @@
 import pandas as pd
-import statistics
+import numpy as np
+import datetime
 
-# Load data from Excel file
-df = pd.read_excel('C:\\Users\\baladitya\\OneDrive\\Documents\\GitHub\\Machine_learning\\Lab_Assignments\\lab_3\\lab_1.xlsx', sheet_name='IRCTC Stock Price')
+def read_excel_data(file_path, sheet_name):
+    data = pd.read_excel(file_path, sheet_name=sheet_name)
+    return data
 
-# Calculate the mean and variance of the Price data present in column D
-price_mean = df['Price'].mean()
-price_variance = df['Price'].var()
-print("Mean of Price data:", price_mean)
-print("Variance of Price data:", price_variance)
+# Read data from Excel file
+Data = read_excel_data("Lab_Session1_Data.xlsx", sheet_name="IRCTC Stock Price")
 
-# Select the price data for all  Wednesdays and calculate the sample mean
-wednesday_prices = df[df['Day'] == 'Wed']['Price']
-if not wednesday_prices.empty:
-    wednesday_mean = wednesday_prices.mean()
-    print("\nSample mean of Wednesday price data:", wednesday_mean)
-    print("Comparison with population mean:", "Greater" if wednesday_mean > price_mean else "Equal/Lesser")
-else:
-    print("\nNo data available for Wednesdays.")
+# Calculate the mean and variance of the Price data
+Price = Data["Price"].values
+mean_price = np.mean(Price)
+variance_price = np.var(Price)
+print(f"Mean value of Prices: {mean_price}")
+print(f"Variance of Prices: {variance_price}")
 
-# Select the price data for the month of April and calculate the sample mean
-april_prices = df[df['Month'] == 'Apr']['Price']
-if not april_prices.empty:
-    april_mean = april_prices.mean()
-    print("\nSample mean of April price data:", april_mean)
-    print("Comparison with population mean:", "Greater" if april_mean > price_mean else "Equal/Lesser")
-else:
-    print("\nNo data available for the month of April.")
+# Convert the date column to datetime format
+Data['Date'] = pd.to_datetime(Data['Date'])
 
-# Probability of making a loss over the stock (negative Chg%)
-loss_probability = df['Chg%'].apply(lambda x: 1 if x < 0 else 0).mean()
-print("\nProbability of making a loss over the stock:", loss_probability)
+# Filter data for Wednesdays
+wednesday_data = Data[Data['Date'].dt.dayofweek == 2]  # 2 corresponds to Wednesday
+mean_price_wednesday = wednesday_data["Price"].mean()
+print(f"Sample mean of Prices on Wednesdays: {mean_price_wednesday}")
 
-# Probability of making a profit on Wednesday
-if not wednesday_prices.empty:
-    wednesday_profit_probability = df[(df['Day'] == 'Wed') & (df['Chg%'] > 0)].shape[0] / wednesday_prices.shape[0]
-    print("Probability of making a profit on Wednesday:", wednesday_profit_probability)
-else:
-    print("No data available for Wednesdays.")
+# Filter data for the month of April
+april_data = Data[Data['Date'].dt.month == 4]  # 4 corresponds to April
+mean_price_april = april_data["Price"].mean()
+print(f"Sample mean of Prices in April: {mean_price_april}")
 
-# Conditional probability of making profit, given that today is Wednesday
-if not wednesday_prices.empty:
-    conditional_profit_probability = df[(df['Day'] == 'Wed') & (df['Chg%'] > 0)].shape[0] / wednesday_prices.shape[0]
-    print("Conditional probability of making profit, given that today is Wednesday:", conditional_profit_probability)
-else:
-    print("No data available for Wednesdays.")
+# Calculate the probability of making a loss over the stock (Chg% < 0)
+loss_probability = len(Data[Data['Chg%'] < 0]) / len(Data)
+print(f"Probability of making a loss over the stock: {loss_probability}")
+
+# Calculate the probability of making a profit on Wednesday (Chg% > 0)
+wednesday_profit_probability = len(wednesday_data[wednesday_data['Chg%'] > 0]) / len(wednesday_data)
+print(f"Probability of making a profit on Wednesday: {wednesday_profit_probability}")
+
+# Calculate the conditional probability of making profit given that today is Wednesday
+conditional_profit_probability = len(wednesday_data[wednesday_data['Chg%'] > 0]) / len(Data)
+print(f"Conditional probability of making profit given that today is Wednesday: {conditional_profit_probability}")
 
 # Make a scatter plot of Chg% data against the day of the week
 import matplotlib.pyplot as plt
-plt.scatter(df['Day'], df['Chg%'])
+plt.scatter(Data['Date'].dt.dayofweek, Data['Chg%'])
 plt.xlabel('Day of the Week')
 plt.ylabel('Chg%')
-plt.title('Scatter plot of Chg% data against the day of the week')
-plt.xticks(rotation=45)
+plt.title('Chg% data against the day of the week')
 plt.show()
